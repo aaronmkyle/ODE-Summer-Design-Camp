@@ -1,0 +1,45 @@
+/*This code uses the MPU-6050 (aka HW-123) 6 axis accelerometer. In this code, we are only determining the motion in the x-, y-, and z-axes.
+
+#include <Wire.h> // Include the Wire library to communicate over I2C
+
+int MPUaddress = 0x68; // I2C address of the MPU-6050 sensor (default is 0x68)
+
+float accelX, accelY, accelZ; // Variables to hold acceleration data for X, Y, and Z axes
+float total; // Variable to store the total vector magnitude (optional, currently unused)
+
+void setup()
+{
+  Serial.begin(9600); // Begin serial communication for debugging/output at 9600 baud
+  Wire.begin(); // Initialize I2C communication as master
+  Wire.beginTransmission(MPUaddress); // Begin communication with MPU-6050
+  Wire.write(0x6B); // Write to power management register (PWR_MGMT_1)
+  Wire.write(0); // Set value to 0 to wake up MPU-6050 (disable sleep mode)
+  Wire.endTransmission(true); // End the I2C transmission and release the bus
+}
+
+void loop() {
+  Wire.beginTransmission(MPUaddress); // Begin transmission to read sensor data
+  Wire.write(0x3B); // Set register to start reading from (starting at ACCEL_XOUT_H)
+  Wire.endTransmission(false); // End transmission but keep the bus active for request
+  Wire.requestFrom(MPUaddress, 6, true); // Request 6 bytes from accelerometer (X, Y, Z)
+
+  // Combine high and low bytes for each axis and convert to g-force
+  // The raw values are 16-bit signed integers, scaled by dividing by 16384 for ±2g sensitivity
+  accelX = (Wire.read() << 8 | Wire.read()) / 16384.0; // Read and scale X-axis acceleration
+  accelY = (Wire.read() << 8 | Wire.read()) / 16384.0; // Read and scale Y-axis acceleration
+  accelZ = (Wire.read() << 8 | Wire.read()) / 16384.0; // Read and scale Z-axis acceleration
+
+  // Optionally calculate total acceleration vector magnitude
+  // Uncomment this line if you want to use it
+  // total = sqrt(sq(accelX) + sq(accelY) + sq(accelZ)); // Compute overall acceleration (Euclidean norm)
+
+  // Output the individual axis values to the Serial Monitor
+  Serial.print(accelX);
+  Serial.print(","); 
+  Serial.print(accelY);
+  Serial.print(",");
+  Serial.println(accelZ);
+
+  // Output the total vector magnitude if used
+  // Serial.println(total);
+}
