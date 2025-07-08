@@ -1,0 +1,58 @@
+#include <Wire.h>
+
+int MPUaddress = 0x68;
+
+float accelX, accelY, accelZ;       // Acceleration in g
+float velX = 0, velY = 0, velZ = 0; // Velocity in m/s
+float dispX = 0, dispY = 0, dispZ = 0; // Displacement in meters
+
+unsigned long prevTime = 0; // For calculating time between loops
+float dt;                   // Time step in seconds
+
+void setup() {
+  Serial.begin(9600);
+  Wire.begin();
+
+  // Wake up the MPU-6050
+  Wire.beginTransmission(MPUaddress);
+  Wire.write(0x6B);
+  Wire.write(0);
+  Wire.endTransmission(true);
+
+  prevTime = millis(); // Initialize time tracker
+}
+
+void loop() {
+  // Capture current time and compute dt
+  unsigned long currentTime = millis();
+  dt = (currentTime - prevTime) / 1000.0; // convert ms to seconds
+  prevTime = currentTime;
+
+  // Request raw acceleration data
+  Wire.beginTransmission(MPUaddress);
+  Wire.write(0x3B);
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPUaddress, 6, true);
+
+  // Read and scale acceleration to m/s² (1g ≈ 9.81 m/s²)
+  accelX = (Wire.read() << 8 | Wire.read()) / 16384.0 * 9.81;
+  accelY = (Wire.read() << 8 | Wire.read()) / 16384.0 * 9.81;
+  accelZ = (Wire.read() << 8 | Wire.read()) / 16384.0 * 9.81;
+
+  // Integrate acceleration to update velocity
+  velX += accelX * dt;
+  velY += accelY * dt;
+  velZ += accelZ * dt;
+
+  // Integrate velocity to update displacement
+  dispX += velX * dt;
+  dispY += velY * dt;
+  dispZ += velZ * dt;
+
+  // Output displacement values
+  Serial.print("X: "); Serial.print(dispX, 4); Serial.print(" m, ");
+  Serial.print("Y: "); Serial.print(dispY, 4); Serial.print(" m, ");
+  Serial.print("Z: "); Serial.println(dispZ, 4); Serial.print(" m");
+
+  delay(10); // Sampling interval (~100 Hz)
+}
