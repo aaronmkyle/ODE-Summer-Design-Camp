@@ -1,0 +1,54 @@
+/* This code uses an ultrasonic probe to detect objects. When an object is within a certain distance
+when an object is too close, a beeper/blinker will go off at an increasing tone repetition rate as the object gets closer */
+
+
+#define trigPin 7     // Digital pin used to send ultrasonic trigger pulse
+#define echoPin 8     // Digital pin used to receive echo from ultrasonic sensor
+#define tonePin 13    // Digital pin connected to buzzer output
+
+long duration;       // Time duration of received echo pulse
+int distance;        // Calculated distance from sensor to object (in cm)
+int tonePer;         // Duration (in ms) for each half of the beep cycle
+
+void setup() {
+  // Configure the I/O pins
+  pinMode(trigPin, OUTPUT);
+  pinMode(tonePin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  
+  // Start serial communication for debugging or monitoring
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Initiate ultrasonic measurement by sending a 10µs pulse
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  // Capture the time it takes for the echo to return
+  duration = pulseIn(echoPin, HIGH);
+
+  // Convert echo time to distance (speed of sound ~343 m/s)
+  distance = duration * 0.034 / 2;
+
+  // If object is within 50 cm, activate buzzer with variable beep rate
+  if (distance < 50) {
+    // Map distance to beep interval: closer = faster beeping
+    tonePer = map(distance, 0, 50, 10, 500); // range: 10ms–500ms
+
+    // Manually toggle buzzer on and off with 50% duty cycle
+    digitalWrite(tonePin, HIGH); // Start beep
+    delay(tonePer);              // Hold for tone duration
+    digitalWrite(tonePin, LOW);  // Stop beep
+    delay(tonePer);              // Wait before next beep
+  } else {
+    // Silence buzzer if object is too far
+    digitalWrite(tonePin, LOW);
+  }
+
+  // Short pause before the next measurement cycle
+  delay(5);
+}
