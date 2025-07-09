@@ -1,0 +1,30 @@
+bool buttonPressed = 0;     // Keeps track if the seat has been placed at least once
+bool carSeatPlaced = 0;     // (Not used in your current code but could be used for logic later)
+int placeCounter = 1;       // (Also not used but left here for future ideas)
+
+void setup() {
+  // This function runs once when the Arduino is powered on or reset
+
+  pinMode(13, OUTPUT);      // Set pin 13 as an output (used for the alarm like an LED or buzzer)
+  pinMode(9, INPUT);        // Set pin 9 as an input (used for the button or pressure sensor)
+  digitalWrite(13, LOW);    // Make sure the alarm starts off
+}
+
+void loop() {
+  // This function runs over and over again as long as the Arduino has power
+
+  // If the button is NOT being pressed (seat removed)
+  // and it was pressed before (seat was placed), turn on the alarm
+  if (digitalRead(9) == LOW && buttonPressed == 1) {
+    digitalWrite(13, HIGH);  // Turn ON the alarm
+    delay(250);              // Wait for 250 milliseconds
+    digitalWrite(13, LOW);   // Turn OFF the alarm
+    delay(250);              // Wait again to create a beeping effect
+  }
+
+  // If the button IS being pressed (seat is currently placed)
+  if (digitalRead(9) == HIGH) {
+    buttonPressed = 1;       // Mark that the seat was placed at least once
+    digitalWrite(13, LOW);   // Make sure the alarm is off while the seat is placed
+  }
+}
